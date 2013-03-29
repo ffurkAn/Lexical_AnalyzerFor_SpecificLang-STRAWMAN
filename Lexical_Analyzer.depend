@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1364500007 source:c:\users\furkan\desktop\lexical_analyzer\main.c
+1364580375 source:c:\users\furkan\desktop\lexical_analyzer\main.c
 	<stdio.h>
 	<stdlib.h>
 	<ctype.h>

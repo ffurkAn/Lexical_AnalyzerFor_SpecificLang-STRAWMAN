@@ -1,3 +1,12 @@
-STR1    := STR2        :"aen eme    ?" + "abc";
 
 
+
+BaseString:="Strawman is a new language"; 
+Message:=BaseString:"a new"<"the" 
++" of future!"; 
+
+
+
+
+myDataString:="Hello world."; 
+WRITE myDataString + " Oh What a cliche!" TO "output.txt";
