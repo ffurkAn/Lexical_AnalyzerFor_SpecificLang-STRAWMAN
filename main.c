@@ -18,6 +18,8 @@
 #define SEMICOLON 14
 #define READ 15
 #define WRITE 16
+#define LEFTPH 17
+#define RIGHTPH 18
 #define UNKNOWN 99
 #define MAX 50
 #define EOF -1
@@ -401,6 +403,62 @@ void lex ()
 
                   break;
 
+            case LEFTPH :
+
+                  getChar();
+                  if(nextChar=='"')
+                        charClass=STRING;
+                  else if(isalpha(nextChar))
+                        charClass=LETTER;
+
+                  terminal->name[0] = '(';
+                  terminal->name[1] = '\0';
+                  terminal->type[0] = 'l';
+                  terminal->type[1] = 'e';
+                  terminal->type[2] = 'f';
+                  terminal->type[3] = 't';
+                  terminal->type[4] = 'P';
+                  terminal->type[5] = 'A';
+                  terminal->type[6] = 'R';
+                  terminal->type[7] = 'A';
+                  terminal->type[8] = 'N';
+                  terminal->type[9] = 'T';
+                  terminal->type[10] = '\0';
+                   terminal->row=glRow;
+                  terminal->col=glCol;
+                  addToList(&linkedList, terminal);
+
+
+                  break;
+
+            case RIGHTPH :
+
+                  getChar();
+                  if(nextChar=='"')
+                        charClass=STRING;
+                  else if(isalpha(nextChar))
+                        charClass=LETTER;
+
+                  terminal->name[0] = ')';
+                  terminal->name[1] = '\0';
+                  terminal->type[0] = 'r';
+                  terminal->type[1] = 'i';
+                  terminal->type[2] = 'g';
+                  terminal->type[3] = 'h';
+                  terminal->type[4] = 't';
+                  terminal->type[5] = 'P';
+                  terminal->type[6] = 'A';
+                  terminal->type[7] = 'R';
+                  terminal->type[8] = 'A';
+                  terminal->type[9] = 'N';
+                  terminal->type[10] = 'T';
+                  terminal->type[11] = '\0';
+                  terminal->row=glRow;
+                  terminal->col=glCol;
+                  addToList(&linkedList, terminal);
+
+                  break;
+
             case TRUNCAT :
 
                   getChar();
@@ -517,6 +575,18 @@ void getChar()
             else if(nextChar == ';')
             {
                   charClass = EOL;
+            }
+            else if(nextChar == '(')
+            {
+                  charClass=LEFTPH;
+            }
+            else if(nextChar == ' ')
+            {
+                  charClass = BLANK;
+            }
+            else if(nextChar == ')')
+            {
+                  charClass=RIGHTPH;
             }
             else if(nextChar=='\n')
                   {

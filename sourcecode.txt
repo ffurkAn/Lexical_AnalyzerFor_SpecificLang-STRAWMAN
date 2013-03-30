@@ -1,12 +1,2 @@
 
-
-
-BaseString:="Strawman is a new language"; 
-Message:=BaseString:"a new"<"the" 
-+" of future!"; 
-
-
-
-
-myDataString:="Hello world."; 
-WRITE myDataString + " Oh What a cliche!" TO "output.txt";
+myStr:=( (STR1: "is" <"can be"  ):/"day" )+ "or the last";
