@@ -1,2 +1,2 @@
 
-myStr:=( (STR1: "is" <"can be"  ):/"day" )+ "or the last";
+myStr:=((STR1: "aaaa"  "can be"  ):/"day" ) "or the last";
