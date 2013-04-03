@@ -1,0 +1,63 @@
+STR1   :=  "To be or not to be!";
+   STR1 := "Merhaba"  +"Dunya"
+STR2 :   "Merhaba Aydan";    STRX   := #  "Son bir haftadir "+
+                   "film 
+                   izlemiyorum";
+                                            STRY   :=  "Sytanx analizde lexical analyzer "+"ve sy
+                                    ntax analyzer veya
+                                              parsing yapýlýr";
+                       WRITE  "Code generate etmek intermadiate veya assembly 
+                                          kodun makine koduna donusturulmasi";/*Assembly koda benzer intemadiate kod*/
+			myDataString:="hello World."
+WRITE myDataString    +" Oh What a cliche!"TO   "output.txt";
+
+
+
+
+               STR1  =  Smile, this  is the first day of the last ";
+STR2 :=  STR1:/"the"
+                 STR1  :=  "Smile, this is the first day of the last";
+                    mystring  :=((STR1:"is"<"can be") :/"day")  + "or the last ";
+/*This script results in the variable
+ 						 mayString being assigned the value 
+" Smile, this can be the first 
+                                                                                        		or the last"*/
+					STR1 :=  "To be     "  +"or"   +"not to
+                                  be!"
+    STR1  :=    "***   To be or not to be!**  **"  /"*";
+     
+
+              READ  myString FROM  "input.txt";     
+
+
+                            /* produced the same result  as the line below    */
+     STRX  :=   STR2:"problem" 
+                              <  "question";
+                                               
+                                        WRITE    -"Merhaba Aydan"         /* naber nasýlsýn  
+
+
+ 
+
+
+++--+   */
+
+
+												
+BaseString :=   "Strawman is a new language";
+    Message :=  BaseString : "a new " <  "the"
+          +"  of future!";
+                    /* Now the variable Message contains:
+                "Strawman   is the language of the future!"  */                       READ myString;
+
+
+                                                /* okuma komutu*/
+STR1  :="Merhaba Dunya";
+        STR2   :=                   *"This is problem!";  TEXT := STR1+  " " +
+            STR2 +"isn't
+                                 it?";                 
+
+
+
+READ / mydatastring  ;
+
