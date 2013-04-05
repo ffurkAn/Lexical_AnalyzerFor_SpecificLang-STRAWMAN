@@ -40,6 +40,7 @@ void skipBlank();
 void addToList(TERMINAL **, TERMINAL *);
 void printList(TERMINAL *);
 void lex();
+void errorDetect(TERMINAL * bas);
 
 int charClass ;
 int glRow = 1;
@@ -74,17 +75,19 @@ int main()
     else
     {
       getChar();
+      prevTer=linkedList;
       do
       {
          lex();
       }while (charClass!= EOF);
 
+      //errorDetect(linkedList);
       if (errorCounter == 0)
             printList(linkedList);
       else
             printf("\n\n\t%d errors found\n",errorCounter);
 
-            printList(linkedList);
+            //printList(linkedList);
     }
     return 0;
 }
@@ -310,7 +313,7 @@ void lex ()
                               printf("\n(ERROR !) expected character '%c' , on %d line ! ",'"',terminal->row);
                               errorCounter++;
                          }
-                         if (strCounter > 1)
+                         /*if (strCounter > 1)
                          {
                               printf("\n(ERROR !) expected OPERATOR '%s' , on %d line; %d column ! ","<, /, +",terminal->row,terminal->col);;
                               errorCounter++;
@@ -329,13 +332,7 @@ void lex ()
                               WriteCounter = 0;
                               ToCounter = 0;
                               errorCounter++;
-                         }
-                         if (prthCounter != 0)
-                         {
-                              printf("\n(ERROR !) expected parenthesis , on %d line ! ",terminal->row);
-                              errorCounter++;
-                         }
-
+                         }*/
 
                    getChar();
                    break;
@@ -356,7 +353,7 @@ void lex ()
                   else
                   {
                         skipBlank();
-                        charClass=STRING;
+                        //charClass=STRING;
                         isReplace = 1;
 
                         terminal->name[0] = ':';
@@ -376,11 +373,11 @@ void lex ()
                         terminal->col=glCol;
                         addToList(&linkedList, terminal);
 
-                        if (nextChar != '"')
+                      /*  if (nextChar != '"')
                         {
                               printf("\n(ERROR !) expected character '%s' or '%c', on %d line; %d column ! ","=,/,",'"',terminal->row,terminal->col);
                               errorCounter++;
-                        }
+                        }*/
 
                         break;
                   }
@@ -626,6 +623,12 @@ void lex ()
                         errorCounter++;
                   } */
 
+                  /*if (prthCounter != 0)
+                  {
+                        printf("\n(ERROR !) expected parenthesis , on %d line ! ",terminal->row);
+                        errorCounter++;
+                  }*/
+
                   getChar();
                   break;
 
@@ -743,7 +746,6 @@ void skipBlank ()
 void addToList(TERMINAL **bas,TERMINAL *yeni)
 {
     TERMINAL *gecici, *onceki;
-    currentTer = yeni;
 
     if(*bas==NULL) //kuyruk bossa
     {
@@ -777,3 +779,21 @@ void printList(TERMINAL *bas)
             gecici=gecici->sonraki;
       }
 }
+/*void errorDetect(TERMINAL * bas)
+{
+      prevTer = bas;
+      currentTer= bas->sonraki;
+      while (currentTer!=NULL)
+      {
+            if(strcmp(prevTer->type,currentTer->type)==0)
+            {
+                  printf("\n(ERROR!) same type on %d line; %d column ! ", currentTer->row,currentTer->col);
+                  errorCounter++;
+            }
+
+            if(currentTer->name[0]!='('&& currentTer->name[0]!=')')
+                  prevTer=currentTer;
+
+            currentTer=currentTer->sonraki;
+      }
+}*/

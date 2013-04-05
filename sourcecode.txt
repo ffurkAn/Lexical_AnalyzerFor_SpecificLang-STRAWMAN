@@ -1,1 +1,1 @@
-STR:== STR2:"asd"<<"sd";
+STR := : " asfd " +  :"asdsad" : :  / : :: :/ (((/ :/  STRx := )) ;
