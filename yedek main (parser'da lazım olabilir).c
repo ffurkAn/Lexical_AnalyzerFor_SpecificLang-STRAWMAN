@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <windows.h>
 
 #define ASSIGN 1
 #define TRIM 2
@@ -23,15 +22,15 @@
 #define RIGHTPH 18
 #define COMMENT 35
 #define UNKNOWN 99
-#define typeMAX 20
-#define nameMAX 100
+#define MAX 50
 #define EOF -1
 
 struct Terminal {
-      char name [nameMAX];
-      char type [typeMAX];
+      char name [MAX];
+      char type [MAX];
       int row ;
       int col ;
+      int level ;
       struct Terminal *sonraki;
 
 } typedef TERMINAL;
@@ -41,15 +40,29 @@ void skipBlank();
 void addToList(TERMINAL **, TERMINAL *);
 void printList(TERMINAL *);
 void lex();
+void errorDetect(TERMINAL * bas);
 
 int charClass ;
 int glRow = 1;
 int glCol = 0;
 char nextChar ;
 char prevChar;
-int identLen = 0;
+char tempChar;
+int nextToken ;
+int prthCounter = 0;
 int errorCounter = 0;
-
+int isReplace = 0;
+int isComment = 0;
+int replaceOpCounter = 0;
+int strCounter = 0;
+int isIdent = 0;
+int isWrite = 0;
+int FromCounter = 0;
+int ToCounter = 0;
+int ReadCounter =0;
+int WriteCounter = 0;
+TERMINAL *prevTer = NULL;
+TERMINAL *currentTer = NULL;
 
 FILE *file, *fopen() ;
 TERMINAL *linkedList = NULL;
@@ -57,17 +70,18 @@ TERMINAL *linkedList = NULL;
 int main()
 {
 
-    if ((file = fopen("sourcecode.stw", "r")) == NULL)
-      printf("(ERROR !) File could not be opened properly.");
+    if ((file = fopen("sourcecode.txt", "r")) == NULL)
+      printf("Dosya acilamadi..");
     else
     {
       getChar();
-
+      prevTer=linkedList;
       do
       {
          lex();
       }while (charClass!= EOF);
 
+      //errorDetect(linkedList);
       if (errorCounter == 0)
             printList(linkedList);
       else
@@ -75,14 +89,11 @@ int main()
 
             //printList(linkedList);
     }
-    system("pause");
     return 0;
 }
 
 void lex ()
 {
-      int row = 0;
-      int col = 0;
 
       TERMINAL *terminal;
 
@@ -90,136 +101,135 @@ void lex ()
       terminal = malloc(sizeof(TERMINAL));
       skipBlank();
 
+      if (charClass != STRING && charClass != LEFTPH && charClass != RIGHTPH)
+            strCounter = 0;
 
       switch (charClass)
       {
-
-            case DIGIT :
-                  charClass = UNKNOWN;
-                  break;
-
             case LETTER :
 
-                  row = glRow;
-                  col = glCol-1;
                   terminal->name[index]=nextChar;
                   index++;
                   getChar();
+                  while (charClass == LETTER || charClass == DIGIT)
+                  {
 
-                        while (charClass == LETTER || charClass == DIGIT)
+                        terminal->name[index]=nextChar;
+                        index++;
+                        getChar();
+
+                        if(index==4)
                         {
-                              if (index > (19))
-                              {
-                                    printf("\n(ERROR !) IDENTIFIER cannot be longer than 20 characters , on %d line , %d column ! ", row,col);
-                                    errorCounter++;
-                                    break;
-                              }
-                              terminal->name[index]=nextChar;
-                              index++;
-                              getChar();
 
-                              if(index==4)
-                              {
-                                    if(terminal->name[0] == 'R' && terminal->name[1] == 'E' && terminal->name[2] == 'A' && terminal->name[3] == 'D' && nextChar == ' ' )
-                                    {
-                                          charClass=READ;
-                                          terminal->name[0] = 'R';
-                                          terminal->name[1] = 'E';
-                                          terminal->name[2] = 'A';
-                                          terminal->name[3] = 'D';
-                                          terminal->name[4] = '\0';
-                                          terminal->type[0] = 'R';
-                                          terminal->type[1] = 'E';
-                                          terminal->type[2] = 'A';
-                                          terminal->type[3] = 'D';
-                                          terminal->type[4] = 'C';
-                                          terminal->type[5] = 'O';
-                                          terminal->type[6] = 'M';
-                                          terminal->type[7] = 'D';
-                                          terminal->type[8] = '\0';
-                                          terminal->row=glRow;
-                                          terminal->col=glCol;
-                                          addToList(&linkedList, terminal);
+                              if(terminal->name[0] == 'R' && terminal->name[1] == 'E' && terminal->name[2] == 'A' && terminal->name[3] == 'D' && nextChar == ' ' )
+                               {
+                                    charClass=READ;
+                                    ReadCounter++;
 
-                                          break;
-                                     }
-                              }
+                                    terminal->name[0] = 'R';
+                                    terminal->name[1] = 'E';
+                                    terminal->name[2] = 'A';
+                                    terminal->name[3] = 'D';
+                                    terminal->name[4] = '\0';
+                                    terminal->type[0] = 'R';
+                                    terminal->type[1] = 'E';
+                                    terminal->type[2] = 'A';
+                                    terminal->type[3] = 'D';
+                                    terminal->type[4] = 'C';
+                                    terminal->type[5] = 'O';
+                                    terminal->type[6] = 'M';
+                                    terminal->type[7] = 'D';
+                                    terminal->type[8] = '\0';
+                                    terminal->row=glRow;
+                                    terminal->col=glCol;
+                                    addToList(&linkedList, terminal);
 
-                              if(terminal->name[0] == 'W' && terminal->name[1] == 'R' && terminal->name[2] == 'I' && terminal->name[3] == 'T' && terminal->name[4]=='E' && nextChar == ' ' )
-                              {
-                                          charClass=WRITE;
-
-                                          terminal->name[0] = 'W';
-                                          terminal->name[1] = 'R';
-                                          terminal->name[2] = 'I';
-                                          terminal->name[3] = 'T';
-                                          terminal->name[4] = 'E';
-                                          terminal->name[5] = '\0';
-                                          terminal->type[0] = 'W';
-                                          terminal->type[1] = 'R';
-                                          terminal->type[2] = 'I';
-                                          terminal->type[3] = 'T';
-                                          terminal->type[4] = 'E';
-                                          terminal->type[5] = 'C';
-                                          terminal->type[6] = 'M';
-                                          terminal->type[7] = 'D';
-                                          terminal->type[8] = '\0';
-                                          terminal->row=glRow;
-                                          terminal->col=glCol;
-                                          addToList(&linkedList, terminal);
-
-                                          break;
+                                       break;
+                               }
                         }
 
-                        if(terminal->name[0] == 'F' && terminal->name[1] == 'R' && terminal->name[2] == 'O' && terminal->name[3] == 'M' && nextChar == ' ' )
-                        {
-                                          charClass=WRITE;
+                        if(terminal->name[0] == 'W' && terminal->name[1] == 'R' && terminal->name[2] == 'I' && terminal->name[3] == 'T' && terminal->name[4]=='E' && nextChar == ' ' )
+                               {
+                                    charClass=WRITE;
+                                    WriteCounter++;
 
-                                          terminal->name[0] = 'F';
-                                          terminal->name[1] = 'R';
-                                          terminal->name[2] = 'O';
-                                          terminal->name[3] = 'M';
-                                          terminal->name[4] = '\0';
-                                          terminal->type[0] = 'r';
-                                          terminal->type[1] = 'e';
-                                          terminal->type[2] = 'a';
-                                          terminal->type[3] = 'd';
-                                          terminal->type[4] = 'K';
-                                          terminal->type[5] = 'E';
-                                          terminal->type[6] = 'Y';
-                                          terminal->type[7] = 'W';
-                                          terminal->type[8] = '\0';
-                                          terminal->row=glRow;
-                                          terminal->col=glCol;
-                                          addToList(&linkedList, terminal);
+                                    terminal->name[0] = 'W';
+                                    terminal->name[1] = 'R';
+                                    terminal->name[2] = 'I';
+                                    terminal->name[3] = 'T';
+                                    terminal->name[4] = 'E';
+                                    terminal->name[5] = '\0';
+                                    terminal->type[0] = 'W';
+                                    terminal->type[1] = 'R';
+                                    terminal->type[2] = 'I';
+                                    terminal->type[3] = 'T';
+                                    terminal->type[4] = 'E';
+                                    terminal->type[5] = 'C';
+                                    terminal->type[6] = 'M';
+                                    terminal->type[7] = 'D';
+                                    terminal->type[8] = '\0';
+                                    terminal->row=glRow;
+                                    terminal->col=glCol;
+                                    addToList(&linkedList, terminal);
 
-                                          break;
-                        }
-
-                        if(terminal->name[0] == 'T' && terminal->name[1] == 'O' && nextChar == ' ' )
-                        {
-                                          charClass=WRITE;
-
-                                          terminal->name[0] = 'T';
-                                          terminal->name[1] = 'O';
-                                          terminal->name[2] = '\0';
-                                          terminal->type[0] = 'w';
-                                          terminal->type[1] = 'r';
-                                          terminal->type[2] = 'i';
-                                          terminal->type[3] = 't';
-                                          terminal->type[4] = 'e';
-                                          terminal->type[5] = 'K';
-                                          terminal->type[6] = 'E';
-                                          terminal->type[7] = 'Y';
-                                          terminal->type[8] = 'W';
-                                          terminal->type[9] = '\0';
-                                          terminal->row=glRow;
-                                          terminal->col=glCol;
-                                          addToList(&linkedList, terminal);
-
-                                          break;
-                        }
+                                       break;
                   }
+
+                  if(terminal->name[0] == 'F' && terminal->name[1] == 'R' && terminal->name[2] == 'O' && terminal->name[3] == 'M' && nextChar == ' ' )
+                               {
+                                    charClass=WRITE;
+                                    FromCounter++;
+
+                                    terminal->name[0] = 'F';
+                                    terminal->name[1] = 'R';
+                                    terminal->name[2] = 'O';
+                                    terminal->name[3] = 'M';
+
+                                    terminal->name[4] = '\0';
+                                    terminal->type[0] = 'r';
+                                    terminal->type[1] = 'e';
+                                    terminal->type[2] = 'a';
+                                    terminal->type[3] = 'd';
+                                    terminal->type[4] = 'K';
+                                    terminal->type[5] = 'E';
+                                    terminal->type[6] = 'Y';
+                                    terminal->type[7] = 'W';
+                                    terminal->type[8] = '\0';
+                                    terminal->row=glRow;
+                                    terminal->col=glCol;
+                                    addToList(&linkedList, terminal);
+
+                                       break;
+                      }
+
+                      if(terminal->name[0] == 'T' && terminal->name[1] == 'O' && nextChar == ' ' )
+                               {
+                                    charClass=WRITE;
+                                    ToCounter++;
+
+                                    terminal->name[0] = 'T';
+                                    terminal->name[1] = 'O';
+                                    terminal->name[2] = '\0';
+
+                                    terminal->type[0] = 'w';
+                                    terminal->type[1] = 'r';
+                                    terminal->type[2] = 'i';
+                                    terminal->type[3] = 't';
+                                    terminal->type[4] = 'e';
+                                    terminal->type[5] = 'K';
+                                    terminal->type[6] = 'E';
+                                    terminal->type[7] = 'Y';
+                                    terminal->type[8] = 'W';
+                                    terminal->type[9] = '\0';
+
+                                    terminal->row=glRow;
+                                    terminal->col=glCol;
+                                    addToList(&linkedList, terminal);
+
+                                    break;
+                      }
+                  }
+
 
                   if(charClass != READ && charClass != WRITE)
                   {
@@ -269,9 +279,7 @@ void lex ()
 
             case STRING :
 
-                        terminal->row=glRow;
-                        terminal->col=glCol;
-
+                   strCounter++;
                    getChar();
 
                    while (nextChar != '"' && nextChar != EOF)
@@ -283,18 +291,9 @@ void lex ()
                         }
                          terminal->name[index]=nextChar;
                          index++;
-
+                         //getChar();
                          nextChar = getc(file);
                    }
-
-                         if (nextChar == EOF)
-                         {
-                              printf("\n(ERROR !) non-terminated string constant '%c' , on %d line , %d column ! ",'"',terminal->row,terminal->col);
-                              errorCounter++;
-                         }
-
-                         else{
-
 
                          terminal->name[index] = '\0';
                          terminal->type[0]='S';
@@ -304,11 +303,36 @@ void lex ()
                          terminal->type[4]='N';
                          terminal->type[5]='G';
                          terminal->type[6]='\0';
+                         terminal->row=glRow;
+                         terminal->col=glCol;
 
                          addToList(&linkedList, terminal);
 
-
+                         if (nextChar == EOF)
+                         {
+                              printf("\n(ERROR !) expected character '%c' , on %d line ! ",'"',terminal->row);
+                              errorCounter++;
                          }
+                         /*if (strCounter > 1)
+                         {
+                              printf("\n(ERROR !) expected OPERATOR '%s' , on %d line; %d column ! ","<, /, +",terminal->row,terminal->col);;
+                              errorCounter++;
+                         }
+                         if(ReadCounter != FromCounter)
+                         {
+                              printf("\n(ERROR!) expected Read expression ! on Line %d",glRow);
+                              ReadCounter = 0;
+                              FromCounter = 0;
+                              errorCounter++;
+                         }
+
+                         if(WriteCounter != ToCounter)
+                         {
+                              printf("\n(ERROR!) expected WRITE expression ! on Line %d",glRow);
+                              WriteCounter = 0;
+                              ToCounter = 0;
+                              errorCounter++;
+                         }*/
 
                    getChar();
                    break;
@@ -329,7 +353,8 @@ void lex ()
                   else
                   {
                         skipBlank();
-
+                        //charClass=STRING;
+                        isReplace = 1;
 
                         terminal->name[0] = ':';
                         terminal->name[1] = '\0';
@@ -342,19 +367,28 @@ void lex ()
                         terminal->type[6] = 'O';
                         terminal->type[7] = 'L';
                         terminal->type[8] = '\0';
+
+
                         terminal->row=glRow;
                         terminal->col=glCol;
                         addToList(&linkedList, terminal);
 
+                      /*  if (nextChar != '"')
+                        {
+                              printf("\n(ERROR !) expected character '%s' or '%c', on %d line; %d column ! ","=,/,",'"',terminal->row,terminal->col);
+                              errorCounter++;
+                        }*/
+
                         break;
                   }
+
 
                   getChar();
                   break;
 
             case REPLACE :
 
-
+                  replaceOpCounter++;
                   getChar();
                   if(nextChar=='"')
                         charClass=STRING;
@@ -413,16 +447,16 @@ void lex ()
 
             case TRIM :
 
-
+                  isComment=1;
                   getChar();
                   if(nextChar=='"')
                         {
                               charClass=STRING;
-
+                              isComment=0;
                         }
                   else if (nextChar=='*')
                   {
-
+                        isComment = 1;
                         charClass=COMMENT;
                         break;
                   }
@@ -446,9 +480,6 @@ void lex ()
 
             case COMMENT :
                   //isComment=1;
-
-                   row=glRow;
-                   col=glCol;
                   while (nextChar != EOF)
                   {
                         if(nextChar== '\n')
@@ -462,7 +493,7 @@ void lex ()
                               nextChar=getc(file);
                               if(nextChar == '/' )
                               {
-
+                                    isComment = 0;
                                     getChar();
                               break;
                               }
@@ -471,7 +502,7 @@ void lex ()
                   }
                   if (nextChar == EOF)
                   {
-                        printf("\n(ERROR !) non-terminated comment , on %d line; %d column ! ", row,col);
+                        printf("\n(ERROR !) non-terminated comment , on %d line; %d column ! ", glRow,glCol);
                         errorCounter++;
                         charClass = EOF;
                   }
@@ -480,7 +511,7 @@ void lex ()
 
             case LEFTPH :
 
-
+                  prthCounter++;
                   getChar();
                   if(nextChar=='"')
                         charClass=STRING;
@@ -508,7 +539,7 @@ void lex ()
 
             case RIGHTPH :
 
-
+                  prthCounter--;
                   getChar();
                   if(nextChar=='"')
                         charClass=STRING;
@@ -569,6 +600,7 @@ void lex ()
                   errorCounter++;
 
                   getChar();
+
                   break;
 
             case EOL :
@@ -584,6 +616,18 @@ void lex ()
                   terminal->col=glCol;
 
                   addToList(&linkedList, terminal);
+
+                  /* if (isReplace == 1 && replaceOpCounter == 0)
+                  {
+                        printf("\n(ERROR !) expected character '%c' , on %d line ! ",'<',terminal->row);
+                        errorCounter++;
+                  } */
+
+                  /*if (prthCounter != 0)
+                  {
+                        printf("\n(ERROR !) expected parenthesis , on %d line ! ",terminal->row);
+                        errorCounter++;
+                  }*/
 
                   getChar();
                   break;
@@ -665,7 +709,25 @@ void getChar()
                   glCol=1;
                   glRow++;
             }
-
+            /*else if(nextChar != '=' && nextChar!='*' )
+            {
+                  charClass=UNKNOWN;
+                  printf("\n(ERROR !) unknown character '%c' , on %d line; %d column ! ", nextChar,glRow,glCol);
+                  errorCounter++;
+            }
+            else if(prevChar == ':' && nextChar == '=')
+            {
+                  charClass=UNKNOWN;
+                  printf("\n(ERROR !) unknown character '%c' , on %d line; %d column ! ", nextChar,glRow,glCol);
+                  errorCounter++;
+            }
+            else if(nextChar == '*' && isComment == 0)
+            {
+                  charClass=UNKNOWN;
+                  //printf("\n(ERROR !) expected expression , on %d line; %d column ! ", glRow,glCol);
+                  printf("\n(ERROR !) unknown character '%c' , on %d line; %d column ! ", nextChar,glRow,glCol);
+                  errorCounter++;
+            }*/
             else
             {
                 charClass = UNKNOWN;
@@ -722,3 +784,21 @@ void printList(TERMINAL *bas)
             gecici=gecici->sonraki;
       }
 }
+/*void errorDetect(TERMINAL * bas)
+{
+      prevTer = bas;
+      currentTer= bas->sonraki;
+      while (currentTer!=NULL)
+      {
+            if(strcmp(prevTer->type,currentTer->type)==0)
+            {
+                  printf("\n(ERROR!) same type on %d line; %d column ! ", currentTer->row,currentTer->col);
+                  errorCounter++;
+            }
+
+            if(currentTer->name[0]!='('&& currentTer->name[0]!=')')
+                  prevTer=currentTer;
+
+            currentTer=currentTer->sonraki;
+      }
+}*/
