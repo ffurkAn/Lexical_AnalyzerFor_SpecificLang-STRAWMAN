@@ -10,3 +10,9 @@
 	<stdlib.h>
 	<ctype.h>
 
+1367862396 source:d:\ \c.e\bilmuh\2. sýnýf\2.dönem\pl\projects\lexical_analyzer\lexical_analyzerfor_specificlang-strawman\main.c
+	<stdio.h>
+	<stdlib.h>
+	<ctype.h>
+	<windows.h>
+

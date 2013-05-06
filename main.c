@@ -27,9 +27,13 @@
 #define nameMAX 100
 #define EOF -1
 
+
+
+
 struct Terminal {
       char name [nameMAX];
       char type [typeMAX];
+      char value[nameMAX];
       int row ;
       int col ;
       struct Terminal *sonraki;
@@ -41,6 +45,11 @@ void skipBlank();
 void addToList(TERMINAL **, TERMINAL *);
 void printList(TERMINAL *);
 void lex();
+void assignment(TERMINAL *);
+void interpret(TERMINAL *);
+TERMINAL* getNext(TERMINAL *);
+void concat(char [],TERMINAL* );
+void trim(char [],TERMINAL* );
 
 int charClass ;
 int glRow = 1;
@@ -69,7 +78,10 @@ int main()
       }while (charClass!= EOF);
 
       if (errorCounter == 0)
-            printList(linkedList);
+            {
+                  printList(linkedList);
+                  interpret(linkedList);
+            }
       else
             printf("\n\n\t%d errors found\n",errorCounter);
 
@@ -686,7 +698,7 @@ void skipBlank ()
       }
 }
 
-void addToList(TERMINAL **bas,TERMINAL *yeni)
+void addToList(TERMINAL **bas, TERMINAL *yeni)
 {
     TERMINAL *gecici, *onceki;
 
@@ -721,4 +733,75 @@ void printList(TERMINAL *bas)
 
             gecici=gecici->sonraki;
       }
+}
+
+void interpret(TERMINAL *bas)
+{
+      TERMINAL *gecici;
+
+      gecici=bas;
+
+      if (gecici->type[0] == 'I')
+      {
+            assignment(gecici);
+      }
+}
+
+void assignment(TERMINAL *gecici)
+{
+      TERMINAL *sonraki;
+      char string1[nameMAX];
+      int i;
+
+      if ((sonraki=getNext(gecici))->type[0] != 'A')
+      {
+            printf("#ERROR! expected assigment operator!");
+      }
+      else if ((sonraki=getNext(sonraki))->type[0] == 'S')
+      {
+            for(i=0;sonraki->name[i]!='\0';i++)
+            {
+                  string1[i]=sonraki->name[i];
+            }
+
+          if((sonraki=getNext(sonraki))->type[2] == 'I') //trim
+               trim(string1,(sonraki=getNext(sonraki)));
+
+           else if(sonraki->type[0] == 'C')
+                concat(string1,(sonraki=getNext(sonraki))); //concat
+
+            else if(sonraki->type[0] == 'E') //endoOfline
+            {
+                //strcpy(gecici->value, string1);
+                for(i=0;string1[i]!='\0';i++)
+                  {
+                        gecici->value[i]=string1[i];
+                  }
+            }
+      }
+
+      printf("Variable: %s\n", gecici->value);
+
+}
+
+void trim(char str[],TERMINAL* t)
+{
+
+}
+
+void concat(char str[],TERMINAL* t)
+{
+
+}
+
+
+TERMINAL* getNext(TERMINAL *simdiki)
+{
+      if(simdiki->sonraki == NULL)
+          {
+                  printf("null hatasi ");
+                  return simdiki;
+          }
+      else
+            return simdiki->sonraki;
 }

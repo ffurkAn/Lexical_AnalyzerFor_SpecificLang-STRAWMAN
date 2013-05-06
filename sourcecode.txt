@@ -1,1 +1,1 @@
-STR := : " asfd " +  :"asdsad" : :  / : :: :/ (((/ :/  STRx := )) ;
+STR := "asdd" ;
