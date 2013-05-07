@@ -27,13 +27,10 @@
 #define nameMAX 100
 #define EOF -1
 
-
-
-
 struct Terminal {
       char name [nameMAX];
       char type [typeMAX];
-      char value[nameMAX];
+      char value [nameMAX];
       int row ;
       int col ;
       struct Terminal *sonraki;
@@ -48,8 +45,9 @@ void lex();
 void assignment(TERMINAL *);
 void interpret(TERMINAL *);
 TERMINAL* getNext(TERMINAL *);
-void concat(char [],TERMINAL* );
-void trim(char [],TERMINAL* );
+void concat(TERMINAL* );
+void trim(TERMINAL* );
+void strCopy(char [], char []);
 
 int charClass ;
 int glRow = 1;
@@ -58,14 +56,14 @@ char nextChar ;
 char prevChar;
 int identLen = 0;
 int errorCounter = 0;
-
+char string[nameMAX];
 
 FILE *file, *fopen() ;
 TERMINAL *linkedList = NULL;
+TERMINAL *sonraki;
 
 int main()
 {
-
     if ((file = fopen("sourcecode.stw", "r")) == NULL)
       printf("(ERROR !) File could not be opened properly.");
     else
@@ -78,10 +76,14 @@ int main()
       }while (charClass!= EOF);
 
       if (errorCounter == 0)
+      {
+            printList(linkedList);
+            sonraki = linkedList;
+            while(sonraki != NULL)
             {
-                  printList(linkedList);
-                  interpret(linkedList);
+                  interpret(sonraki);
             }
+      }
       else
             printf("\n\n\t%d errors found\n",errorCounter);
 
@@ -457,7 +459,6 @@ void lex ()
                   break;
 
             case COMMENT :
-                  //isComment=1;
 
                    row=glRow;
                    col=glCol;
@@ -749,59 +750,105 @@ void interpret(TERMINAL *bas)
 
 void assignment(TERMINAL *gecici)
 {
-      TERMINAL *sonraki;
-      char string1[nameMAX];
-      int i;
-
       if ((sonraki=getNext(gecici))->type[0] != 'A')
       {
-            printf("#ERROR! expected assigment operator!");
+            printf("#ERROR! expected assigment operator");
       }
       else if ((sonraki=getNext(sonraki))->type[0] == 'S')
       {
-            for(i=0;sonraki->name[i]!='\0';i++)
+            strCopy(string, sonraki->name);
+
+            if((sonraki=getNext(sonraki))->type[2] == 'I') //trim
             {
-                  string1[i]=sonraki->name[i];
+                  trim(sonraki=getNext(sonraki));
+                  sonraki=getNext(sonraki);
             }
 
-          if((sonraki=getNext(sonraki))->type[2] == 'I') //trim
-               trim(string1,(sonraki=getNext(sonraki)));
-
-           else if(sonraki->type[0] == 'C')
-                concat(string1,(sonraki=getNext(sonraki))); //concat
-
-            else if(sonraki->type[0] == 'E') //endoOfline
+            if(sonraki->type[0] == 'C')
             {
-                //strcpy(gecici->value, string1);
-                for(i=0;string1[i]!='\0';i++)
+                  concat(sonraki=getNext(sonraki)); //concat
+                  while ((sonraki=getNext(sonraki))->type[0] == 'C')
                   {
-                        gecici->value[i]=string1[i];
+                        concat(sonraki=getNext(sonraki));
                   }
             }
+
+            if(sonraki->type[0] == 'E') //endOfline
+            {
+                  strCopy(gecici->value, string);
+                  sonraki=getNext(sonraki);
+            }
+
       }
 
       printf("Variable: %s\n", gecici->value);
 
 }
 
-void trim(char str[],TERMINAL* t)
+void trim(TERMINAL* t)
 {
+      int i, j, k, index;
+
+      for (i=0; string[i] != '\0'; )
+      {
+            for (j=0; t->name[j] != '\0'; j++)
+            {
+                  if (string[i] == t->name[j] && string[i+1] == ' ')
+                  {
+                       index = 0;
+                       for (k=i+1; string[k] != '\0'; k++)
+                       {
+                             if (string[k] == ' ' && index == 0)
+                                    continue;
+
+                             string[index] = string[k];
+                             index++;
+                       }
+                       string[index] = '\0';
+                  }
+
+                  i++;
+            }
+      }
+
+      for (i=index; i >= 0; )
+      {
+            for (k=0; t->name[k] != '\0'; k++)
+            {
+                  if (string[i] == t->name[k] && string[i-1] == ' ')
+                  {
+                        string[i-1] = '\0';
+                  }
+
+                  i--;
+            }
+      }
 
 }
 
-void concat(char str[],TERMINAL* t)
+void concat(TERMINAL* t)
 {
+      int i, j;
 
+      for (i=0; i<nameMAX; i++)
+      {
+            if (string[i] == '\0')
+            {
+                  for (j=0; t->name[j] != '\0'; string[i] = t->name[j], i++, j++);
+                  break;
+            }
+      }
 }
 
 
 TERMINAL* getNext(TERMINAL *simdiki)
 {
-      if(simdiki->sonraki == NULL)
-          {
-                  printf("null hatasi ");
-                  return simdiki;
-          }
-      else
-            return simdiki->sonraki;
+      return simdiki->sonraki;
+}
+
+void strCopy(char degisicek [], char kopyalancak[])
+{
+      int i;
+      for (i=0; kopyalancak[i] != '\0'; degisicek[i] = kopyalancak[i], i++);
+      degisicek[i]='\0';
 }
