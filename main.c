@@ -31,6 +31,7 @@ struct Terminal {
       char name [nameMAX];
       char type [typeMAX];
       char value [nameMAX];
+      int charClass;
       int row ;
       int col ;
       struct Terminal *sonraki;
@@ -42,10 +43,10 @@ void skipBlank();
 void addToList(TERMINAL **, TERMINAL *);
 void printList(TERMINAL *);
 void lex();
-void assignment(TERMINAL *);
-void interpret(TERMINAL *);
+void assignment();
+void interpret();
 TERMINAL* getNext(TERMINAL *);
-void concat(TERMINAL* );
+void concat();
 void trim(TERMINAL* );
 void strCopy(char [], char []);
 
@@ -61,11 +62,12 @@ char string[nameMAX];
 FILE *file, *fopen() ;
 TERMINAL *linkedList = NULL;
 TERMINAL *sonraki;
+TERMINAL *variable;
 
 int main()
 {
     if ((file = fopen("sourcecode.stw", "r")) == NULL)
-      printf("(ERROR !) File could not be opened properly.");
+      printf("(ERROR !) File could not be opened properly.\n");
     else
     {
       getChar();
@@ -81,7 +83,10 @@ int main()
             sonraki = linkedList;
             while(sonraki != NULL)
             {
-                  interpret(sonraki);
+                  printf("onceki = %s\n", sonraki->name);
+                  interpret();
+                  printf("sonraki = %s\n", sonraki->name);
+                  sonraki = getNext(sonraki);
             }
       }
       else
@@ -153,6 +158,7 @@ void lex ()
                                           terminal->type[8] = '\0';
                                           terminal->row=glRow;
                                           terminal->col=glCol;
+                                          terminal->charClass=READ;
                                           addToList(&linkedList, terminal);
 
                                           break;
@@ -180,6 +186,7 @@ void lex ()
                                           terminal->type[8] = '\0';
                                           terminal->row=glRow;
                                           terminal->col=glCol;
+                                          terminal->charClass=WRITE;
                                           addToList(&linkedList, terminal);
 
                                           break;
@@ -187,7 +194,7 @@ void lex ()
 
                         if(terminal->name[0] == 'F' && terminal->name[1] == 'R' && terminal->name[2] == 'O' && terminal->name[3] == 'M' && nextChar == ' ' )
                         {
-                                          charClass=WRITE;
+                                          charClass=READ;
 
                                           terminal->name[0] = 'F';
                                           terminal->name[1] = 'R';
@@ -205,6 +212,7 @@ void lex ()
                                           terminal->type[8] = '\0';
                                           terminal->row=glRow;
                                           terminal->col=glCol;
+                                          terminal->charClass=READ;
                                           addToList(&linkedList, terminal);
 
                                           break;
@@ -229,6 +237,7 @@ void lex ()
                                           terminal->type[9] = '\0';
                                           terminal->row=glRow;
                                           terminal->col=glCol;
+                                          terminal->charClass=WRITE;
                                           addToList(&linkedList, terminal);
 
                                           break;
@@ -252,6 +261,7 @@ void lex ()
                         terminal->type[10] = '\0';
                         terminal->row=glRow;
                         terminal->col=glCol;
+                        terminal->charClass=IDENT;
 
                         addToList(&linkedList, terminal);
                   }
@@ -276,6 +286,7 @@ void lex ()
                   terminal->type[10] = '\0';
                   terminal->row=glRow;
                   terminal->col=glCol;
+                  terminal->charClass=ASSIGN;
                   addToList(&linkedList, terminal);
 
                   getChar();
@@ -283,8 +294,8 @@ void lex ()
 
             case STRING :
 
-                        terminal->row=glRow;
-                        terminal->col=glCol;
+                  terminal->row=glRow;
+                  terminal->col=glCol;
 
                    getChar();
 
@@ -309,18 +320,17 @@ void lex ()
 
                          else{
 
+                               terminal->name[index] = '\0';
+                               terminal->type[0]='S';
+                               terminal->type[1]='T';
+                               terminal->type[2]='R';
+                               terminal->type[3]='I';
+                               terminal->type[4]='N';
+                               terminal->type[5]='G';
+                               terminal->type[6]='\0';
+                               terminal->charClass=STRING;
 
-                         terminal->name[index] = '\0';
-                         terminal->type[0]='S';
-                         terminal->type[1]='T';
-                         terminal->type[2]='R';
-                         terminal->type[3]='I';
-                         terminal->type[4]='N';
-                         terminal->type[5]='G';
-                         terminal->type[6]='\0';
-
-                         addToList(&linkedList, terminal);
-
+                               addToList(&linkedList, terminal);
 
                          }
 
@@ -344,7 +354,6 @@ void lex ()
                   {
                         skipBlank();
 
-
                         terminal->name[0] = ':';
                         terminal->name[1] = '\0';
                         terminal->type[0] = 'R';
@@ -358,6 +367,7 @@ void lex ()
                         terminal->type[8] = '\0';
                         terminal->row=glRow;
                         terminal->col=glCol;
+                        terminal->charClass=REPLACE;
                         addToList(&linkedList, terminal);
 
                         break;
@@ -367,7 +377,6 @@ void lex ()
                   break;
 
             case REPLACE :
-
 
                   getChar();
                   if(nextChar=='"')
@@ -390,6 +399,7 @@ void lex ()
 
                   terminal->row=glRow;
                   terminal->col=glCol;
+                  terminal->charClass=REPLACE;
                   addToList(&linkedList, terminal);
 
                   break;
@@ -420,6 +430,7 @@ void lex ()
                   terminal->type[13] = '\0';
                   terminal->row=glRow;
                   terminal->col=glCol;
+                  terminal->charClass=CONCAT;
 
                   addToList(&linkedList, terminal);
 
@@ -427,16 +438,14 @@ void lex ()
 
             case TRIM :
 
-
                   getChar();
                   if(nextChar=='"')
-                        {
-                              charClass=STRING;
+                  {
+                        charClass=STRING;
 
-                        }
+                  }
                   else if (nextChar=='*')
                   {
-
                         charClass=COMMENT;
                         break;
                   }
@@ -454,14 +463,15 @@ void lex ()
                   terminal->type[8] = '\0';
                   terminal->row=glRow;
                   terminal->col=glCol;
+                  terminal->charClass=TRIM;
                   addToList(&linkedList, terminal);
 
                   break;
 
             case COMMENT :
 
-                   row=glRow;
-                   col=glCol;
+                  row=glRow;
+                  col=glCol;
                   while (nextChar != EOF)
                   {
                         if(nextChar== '\n')
@@ -475,9 +485,8 @@ void lex ()
                               nextChar=getc(file);
                               if(nextChar == '/' )
                               {
-
                                     getChar();
-                              break;
+                                    break;
                               }
                         }
 
@@ -492,7 +501,6 @@ void lex ()
                   break;
 
             case LEFTPH :
-
 
                   getChar();
                   if(nextChar=='"')
@@ -515,12 +523,12 @@ void lex ()
                   terminal->type[10] = '\0';
                   terminal->row=glRow;
                   terminal->col=glCol;
+                  terminal->charClass=LEFTPH;
                   addToList(&linkedList, terminal);
 
                   break;
 
             case RIGHTPH :
-
 
                   getChar();
                   if(nextChar=='"')
@@ -544,6 +552,7 @@ void lex ()
                   terminal->type[11] = '\0';
                   terminal->row=glRow;
                   terminal->col=glCol;
+                  terminal->charClass=RIGHTPH;
                   addToList(&linkedList, terminal);
 
                   break;
@@ -571,6 +580,7 @@ void lex ()
 
                   terminal->row=glRow;
                   terminal->col=glCol;
+                  terminal->charClass=TRUNCAT;
 
                   addToList(&linkedList, terminal);
 
@@ -595,6 +605,7 @@ void lex ()
 
                   terminal->row=glRow;
                   terminal->col=glCol;
+                  terminal->charClass=EOL;
 
                   addToList(&linkedList, terminal);
 
@@ -610,6 +621,7 @@ void lex ()
 
                   terminal->row=glRow;
                   terminal->col=glCol;
+                  terminal->charClass=EOF;
 
                   break;
 
@@ -736,108 +748,214 @@ void printList(TERMINAL *bas)
       }
 }
 
-void interpret(TERMINAL *bas)
+void interpret()
 {
-      TERMINAL *gecici;
-
-      gecici=bas;
-
-      if (gecici->type[0] == 'I')
+      switch (sonraki->charClass)
       {
-            assignment(gecici);
+            case IDENT :
+                  printf("case IDENT\n");
+                  variable = sonraki;
+                  sonraki=getNext(sonraki);
+
+                  while (sonraki->charClass != EOL)
+                  {
+                        assignment();
+                  }
+
+                  printf("Variable: %s\n", variable->value);
+                  break;
+
+            case READ :
+                  break;
+
+            case WRITE :
+                  break;
       }
+
+      /*if (sonraki->type[0] == 'I')
+      {
+            sonraki = getNext(sonraki);
+            while (sonraki->name[0] != ';')
+            {
+                  assignment();
+                  sonraki = getNext(sonraki);
+            }
+            sonraki = getNext(sonraki);
+      }*/
 }
 
-void assignment(TERMINAL *gecici)
+void assignment()
 {
-      if ((sonraki=getNext(gecici))->type[0] != 'A')
+      /*if (sonraki->type[0] != 'A')
       {
             printf("#ERROR! expected assigment operator");
       }
       else if ((sonraki=getNext(sonraki))->type[0] == 'S')
       {
             strCopy(string, sonraki->name);
+            sonraki=getNext(sonraki);*/
 
-            if((sonraki=getNext(sonraki))->type[2] == 'I') //trim
+            sonraki=getNext(sonraki);
+            printf("sonraki->charClass = %d\n", sonraki->charClass);
+            switch (sonraki->charClass)
             {
-                  trim(sonraki=getNext(sonraki));
-                  sonraki=getNext(sonraki);
+                  case STRING :
+                        printf("case STRING\n");
+                        strCopy(string, sonraki->name);
+                        break;
+
+                  case TRIM :
+                        printf("case TRIM\n");
+                        sonraki=getNext(sonraki);
+                        trim(sonraki);
+                        break;
+
+                  case CONCAT :
+                        printf("case CONCAT\n");
+                        concat();
+                        break ;
+
+                  case EOL :
+                        printf("case EOL\n");
+                        strCopy(variable->value, string);
+                        break;
             }
 
-            if(sonraki->type[0] == 'C')
+            /*if(sonraki->type[2] == 'I') //trim
+                  {
+                        trim(sonraki=getNext(sonraki));
+                        //sonraki=getNext(sonraki);
+                  }
+                  break;
+
+            else if(sonraki->type[0] == 'C')
             {
-                  concat(sonraki=getNext(sonraki)); //concat
+                  concat(); //concat
                   while ((sonraki=getNext(sonraki))->type[0] == 'C')
                   {
                         concat(sonraki=getNext(sonraki));
                   }
-            }
+
 
             if(sonraki->type[0] == 'E') //endOfline
             {
-                  strCopy(gecici->value, string);
-                  sonraki=getNext(sonraki);
+                  strCopy(sonraki->value, string);
+                  //sonraki=getNext(sonraki);
             }
 
-      }
-
-      printf("Variable: %s\n", gecici->value);
+      }*/
 
 }
 
 void trim(TERMINAL* t)
 {
       int i, j, k, index;
+      int sayac = 0;
 
-      for (i=0; string[i] != '\0'; )
+      i = 0;
+      for (k=0; string[k] != ' '; k++)
       {
             for (j=0; t->name[j] != '\0'; j++)
             {
-                  if (string[i] == t->name[j] && string[i+1] == ' ')
+                  if (string[i] == t->name[j])
                   {
-                       index = 0;
-                       for (k=i+1; string[k] != '\0'; k++)
+                       sayac++;
+                       if (t->name[j+1] == '\0') //if conditions written by SALTANAT760
                        {
-                             if (string[k] == ' ' && index == 0)
-                                    continue;
-
-                             string[index] = string[k];
-                             index++;
+                             if ((string[i+1] != t->name[0]) && (string[i+1] != ' ') && (strlen(t->name) > 1))
+                             {
+                                   sayac = 1;
+                                   break;
+                             }
                        }
-                       string[index] = '\0';
+                       else
+                       {
+                             if ((string[i+1] != t->name[j+1]) && (string[i+1] != ' ') && (strlen(t->name) > 1))
+                             {
+                                   sayac = 1;
+                                   break;
+                             }
+                       }
+
                   }
 
                   i++;
             }
+            if (sayac == 1)
+                  break;
+      }
+      printf("sayac : %d\n",sayac);
+      if ((sayac % strlen(t->name)) == 0)
+      {
+            index = 0;
+            for (k=sayac; string[k] != '\0'; k++)
+            {
+                  if (string[k] == ' ' && index == 0)
+                        continue;
+
+                  string[index] = string[k];
+                  index++;
+            }
+            for (i=index+1; i<nameMAX; i++)
+                  string[i] = '\0';
       }
 
-      for (i=index; i >= 0; )
+      sayac = 0;
+      i = (strlen(string)-1);
+      for (k=(strlen(string)-1); string[k] != ' '; k--)
       {
-            for (k=0; t->name[k] != '\0'; k++)
+            for (j=(strlen(t->name)-1); j>=0; j--)
             {
-                  if (string[i] == t->name[k] && string[i-1] == ' ')
+                  if (string[i] == t->name[j])
                   {
-                        string[i-1] = '\0';
+                        sayac++;
+                        if (j == 0) //if conditions written by SALTANAT760
+                        {
+                             if ((string[i-1] != t->name[strlen(t->name)-1]) && string[i-1] != ' ')
+                             {
+                                   sayac = 1;
+                                   break;
+                             }
+                        }
+                        else
+                        {
+                             if ((string[i-1] != t->name[j-1]) && string[i-1] != ' ')
+                             {
+                                   sayac = 1;
+                                   break;
+                             }
+                        }
                   }
 
                   i--;
             }
+            if (sayac == 1)
+                  break;
+      }
+      printf("sayac : %d\n",sayac);
+      if ((sayac % strlen(t->name)) == 0)
+      {
+            for (i=strlen(string)-sayac-1; i<nameMAX; i++)
+                  string[i] = '\0';
       }
 
 }
 
-void concat(TERMINAL* t)
+void concat()
 {
       int i, j;
-
+      sonraki=getNext(sonraki);
       for (i=0; i<nameMAX; i++)
       {
             if (string[i] == '\0')
             {
-                  for (j=0; t->name[j] != '\0'; string[i] = t->name[j], i++, j++);
-                  break;
+                  for (j=0; sonraki->name[j] != '\0'; string[i] = sonraki->name[j], i++, j++);
+                        break;
             }
       }
+
+      for (i=i+j; i<nameMAX; i++)
+            string[i] = '\0';
 }
 
 

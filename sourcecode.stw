@@ -1,1 +1,1 @@
-STR1 := "abc abcTrim String! abc" / "abc";
+STR1 := "abc Trim String!abc ac" / "abc";
