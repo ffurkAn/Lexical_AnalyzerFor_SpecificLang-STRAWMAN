@@ -1,2 +1,1 @@
-STR1 := / "abc" ;
-STR2 := "abc" + " def" ;
+WRITE "deneme" TO "output.txt";

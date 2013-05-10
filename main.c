@@ -46,12 +46,13 @@ void printVariables(TERMINAL *);
 void lex();
 void assignment();
 void interpret();
-TERMINAL* getNext(TERMINAL *);
 void concat();
 void trim();
 void read();
 void write();
 void strCopy(char [], char []);
+void updateVariables(TERMINAL *, TERMINAL *);
+TERMINAL* getNext(TERMINAL *);
 
 int charClass ;
 int glRow = 1;
@@ -749,7 +750,7 @@ void printList(TERMINAL *bas)
 
       gecici=bas;
       printf("\n");
-      while((gecici!=NULL))
+      while(gecici!=NULL)
       {
             printf("\t%s \t %s\n", gecici->name, gecici->type);
 
@@ -763,7 +764,7 @@ void printVariables(TERMINAL *bas)
 
       gecici=bas;
       printf("\n");
-      while((gecici!=NULL))
+      while(gecici!=NULL)
       {
             if (gecici->charClass == IDENT)
                   printf("\t%s \t %s\n", gecici->name, gecici->value);
@@ -793,6 +794,8 @@ void interpret()
                         }
 
                   }
+
+                  updateVariables(linkedList, variable);
 
                   break;
 
@@ -846,7 +849,7 @@ void write()
       variable = sonraki;
       if (sonraki->sonraki->charClass != STRING && sonraki->sonraki->charClass != IDENT && sonraki->sonraki->charClass != LEFTPH)
       {
-            printf("#ERROR! expected identifier or string constant on %d line, %d column \n",sonraki->row, sonraki->col);
+            printf("#ERROR! expected identifier or string constant on %d line, %d column \n", sonraki->row, sonraki->col);
             errorCounter++;
             return;
       }
@@ -861,7 +864,7 @@ void write()
 
             if (sonraki->charClass == TO)
             {
-                  if ((file = fopen((sonraki=getNext(sonraki))->name, "w")) == NULL)
+                  if ((file = fopen((sonraki=getNext(sonraki))->value, "w")) == NULL)
                   {
                         printf("(ERROR !) File could not be opened properly.\n");
                         errorCounter++;
@@ -869,6 +872,7 @@ void write()
                   }
                   else
                   {
+                        printf("\nDosyaya yazma\n");
                         fprintf(file, "%s\n", string);
                         fclose(file);
                   }
@@ -1051,6 +1055,24 @@ void concat()
             string[i] = '\0';
 }
 
+void updateVariables(TERMINAL *bas, TERMINAL *t)
+{
+      TERMINAL *gecici;
+
+      gecici=bas;
+      while(gecici!=NULL)
+      {
+            if (gecici->charClass == IDENT)
+            {
+                  if (strcmp(gecici->name, t->name) == 0)
+                  {
+                        strCopy(gecici->value, t->value);
+                  }
+            }
+
+            gecici=gecici->sonraki;
+      }
+}
 
 TERMINAL* getNext(TERMINAL *simdiki)
 {
