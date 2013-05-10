@@ -9,8 +9,6 @@
 #define REPLACE 4
 #define IDENT 5
 #define STRING 6
-#define LEFTP 7
-#define RIGHTP 8
 #define EOL 9
 #define LETTER 10
 #define DIGIT 11
@@ -21,6 +19,8 @@
 #define WRITE 16
 #define LEFTPH 17
 #define RIGHTPH 18
+#define FROM 19
+#define TO 20
 #define COMMENT 35
 #define UNKNOWN 99
 #define typeMAX 20
@@ -42,12 +42,15 @@ void getChar();
 void skipBlank();
 void addToList(TERMINAL **, TERMINAL *);
 void printList(TERMINAL *);
+void printVariables(TERMINAL *);
 void lex();
 void assignment();
 void interpret();
 TERMINAL* getNext(TERMINAL *);
 void concat();
-void trim(TERMINAL* );
+void trim();
+void read();
+void write();
 void strCopy(char [], char []);
 
 int charClass ;
@@ -59,7 +62,7 @@ int identLen = 0;
 int errorCounter = 0;
 char string[nameMAX];
 
-FILE *file, *fopen() ;
+FILE *file, *fopen();
 TERMINAL *linkedList = NULL;
 TERMINAL *sonraki;
 TERMINAL *variable;
@@ -67,7 +70,7 @@ TERMINAL *variable;
 int main()
 {
     if ((file = fopen("sourcecode.stw", "r")) == NULL)
-      printf("(ERROR !) File could not be opened properly.\n");
+      printf("(ERROR !) File <sourcecode.stw> could not be opened properly.\n");
     else
     {
       getChar();
@@ -77,22 +80,28 @@ int main()
          lex();
       }while (charClass!= EOF);
 
+      fclose(file);
+
       if (errorCounter == 0)
       {
             printList(linkedList);
             sonraki = linkedList;
             while(sonraki != NULL)
             {
-                  printf("onceki = %s\n", sonraki->name);
+                  //printf("onceki = %s\n", sonraki->name);
                   interpret();
-                  printf("sonraki = %s\n", sonraki->name);
+                  //printf("sonraki = %s\n", sonraki->name);
                   sonraki = getNext(sonraki);
             }
+
+            if (errorCounter == 0)
+                  printVariables(linkedList);
+            else
+                  printf("\n\n\t%d error(s) found\n",errorCounter);
       }
       else
-            printf("\n\n\t%d errors found\n",errorCounter);
+            printf("\n\n\t%d error(s) found\n",errorCounter);
 
-            //printList(linkedList);
     }
     system("pause");
     return 0;
@@ -212,7 +221,7 @@ void lex ()
                                           terminal->type[8] = '\0';
                                           terminal->row=glRow;
                                           terminal->col=glCol;
-                                          terminal->charClass=READ;
+                                          terminal->charClass=FROM;
                                           addToList(&linkedList, terminal);
 
                                           break;
@@ -237,7 +246,7 @@ void lex ()
                                           terminal->type[9] = '\0';
                                           terminal->row=glRow;
                                           terminal->col=glCol;
-                                          terminal->charClass=WRITE;
+                                          terminal->charClass=TO;
                                           addToList(&linkedList, terminal);
 
                                           break;
@@ -306,7 +315,7 @@ void lex ()
                               glCol=1;
                               glRow++;
                         }
-                         terminal->name[index]=nextChar;
+                         terminal->value[index]=nextChar;
                          index++;
 
                          nextChar = getc(file);
@@ -318,9 +327,9 @@ void lex ()
                               errorCounter++;
                          }
 
-                         else{
-
-                               terminal->name[index] = '\0';
+                         else
+                         {
+                               terminal->value[index] = '\0';
                                terminal->type[0]='S';
                                terminal->type[1]='T';
                                terminal->type[2]='R';
@@ -748,135 +757,219 @@ void printList(TERMINAL *bas)
       }
 }
 
+void printVariables(TERMINAL *bas)
+{
+      TERMINAL *gecici;
+
+      gecici=bas;
+      printf("\n");
+      while((gecici!=NULL))
+      {
+            if (gecici->charClass == IDENT)
+                  printf("\t%s \t %s\n", gecici->name, gecici->value);
+
+            gecici=gecici->sonraki;
+      }
+}
+
 void interpret()
 {
       switch (sonraki->charClass)
       {
             case IDENT :
-                  printf("case IDENT\n");
                   variable = sonraki;
                   sonraki=getNext(sonraki);
-
-                  while (sonraki->charClass != EOL)
+                  if (sonraki->sonraki->charClass != STRING && sonraki->sonraki->charClass != IDENT && sonraki->sonraki->charClass != LEFTPH)
                   {
-                        assignment();
+                        printf("#ERROR! expected identifier or string constant on %d line, %d column \n",sonraki->row, sonraki->col);
+                        errorCounter++;
+                        return;
+                  }
+                  else
+                  {
+                        while (sonraki->charClass != EOL)
+                        {
+                              assignment();
+                        }
+
                   }
 
-                  printf("Variable: %s\n", variable->value);
                   break;
 
             case READ :
+                  read();
                   break;
 
             case WRITE :
+                  write();
                   break;
       }
 
-      /*if (sonraki->type[0] == 'I')
-      {
-            sonraki = getNext(sonraki);
-            while (sonraki->name[0] != ';')
-            {
-                  assignment();
-                  sonraki = getNext(sonraki);
-            }
-            sonraki = getNext(sonraki);
-      }*/
 }
 
 void assignment()
 {
-      /*if (sonraki->type[0] != 'A')
-      {
-            printf("#ERROR! expected assigment operator");
-      }
-      else if ((sonraki=getNext(sonraki))->type[0] == 'S')
-      {
-            strCopy(string, sonraki->name);
-            sonraki=getNext(sonraki);*/
-
             sonraki=getNext(sonraki);
-            printf("sonraki->charClass = %d\n", sonraki->charClass);
+            //printf("sonraki->charClass = %d\n", sonraki->charClass);
+
             switch (sonraki->charClass)
             {
+                  case IDENT :
+                        //printf("case IDENT\n");
+                        strCopy(string, sonraki->value);
+                        break;
+
                   case STRING :
-                        printf("case STRING\n");
-                        strCopy(string, sonraki->name);
+                        //printf("case STRING\n");
+                        strCopy(string, sonraki->value);
                         break;
 
                   case TRIM :
-                        printf("case TRIM\n");
-                        sonraki=getNext(sonraki);
-                        trim(sonraki);
+                        //printf("case TRIM\n");
+                        trim();
                         break;
 
                   case CONCAT :
-                        printf("case CONCAT\n");
+                        //printf("case CONCAT\n");
                         concat();
                         break ;
 
                   case EOL :
-                        printf("case EOL\n");
+                        //printf("case EOL\n");
                         strCopy(variable->value, string);
                         break;
             }
+}
 
-            /*if(sonraki->type[2] == 'I') //trim
-                  {
-                        trim(sonraki=getNext(sonraki));
-                        //sonraki=getNext(sonraki);
-                  }
-                  break;
-
-            else if(sonraki->type[0] == 'C')
+void write()
+{
+      variable = sonraki;
+      if (sonraki->sonraki->charClass != STRING && sonraki->sonraki->charClass != IDENT && sonraki->sonraki->charClass != LEFTPH)
+      {
+            printf("#ERROR! expected identifier or string constant on %d line, %d column \n",sonraki->row, sonraki->col);
+            errorCounter++;
+            return;
+      }
+      else
+      {
+            while (sonraki->charClass != TO)
             {
-                  concat(); //concat
-                  while ((sonraki=getNext(sonraki))->type[0] == 'C')
-                  {
-                        concat(sonraki=getNext(sonraki));
-                  }
-
-
-            if(sonraki->type[0] == 'E') //endOfline
-            {
-                  strCopy(sonraki->value, string);
-                  //sonraki=getNext(sonraki);
+                  if (sonraki->charClass == EOL)
+                        break;
+                  assignment();
             }
 
-      }*/
+            if (sonraki->charClass == TO)
+            {
+                  if ((file = fopen((sonraki=getNext(sonraki))->name, "w")) == NULL)
+                  {
+                        printf("(ERROR !) File could not be opened properly.\n");
+                        errorCounter++;
+                        return;
+                  }
+                  else
+                  {
+                        fprintf(file, "%s\n", string);
+                        fclose(file);
+                  }
+            }
+            else
+            {
+                  printf("String value: %s", string);
+            }
+
+      }
 
 }
 
-void trim(TERMINAL* t)
+void read()
+{
+      sonraki=getNext(sonraki);
+      variable = sonraki;
+      if (sonraki->charClass != IDENT)
+      {
+            printf("#ERROR! expected identifier on %d line, %d column", sonraki->row, sonraki->col);
+            errorCounter++;
+            return;
+      }
+      else if ((sonraki=getNext(sonraki))->charClass == FROM)
+      {
+            if ((sonraki=getNext(sonraki))->charClass != STRING)
+            {
+                  printf("#ERROR! expected file name on %d line, %d column", sonraki->row, sonraki->col);
+                  errorCounter++;
+                  return;
+            }
+            else
+            {
+                  if ((file = fopen(sonraki->name, "r")) == NULL)
+                  {
+                        printf("(ERROR !) File could not be opened properly.\n");
+                        errorCounter++;
+                        return;
+                  }
+                  else
+                  {
+                        //dosya islemleri
+                  }
+            }
+      }
+      else
+      {
+            printf("Enter a string value: ");
+            scanf("%s", string);
+            strCopy(variable->value, string);
+      }
+}
+
+void trim()
 {
       int i, j, k, index;
       int sayac = 0;
-
+      sonraki=getNext(sonraki);
       i = 0;
+
       for (k=0; string[k] != ' '; k++)
       {
-            for (j=0; t->name[j] != '\0'; j++)
+            for (j=0; sonraki->value[j] != '\0'; j++)
             {
-                  if (string[i] == t->name[j])
+                  if ((strlen(sonraki->value) > 1))
                   {
-                       sayac++;
-                       if (t->name[j+1] == '\0') //if conditions written by SALTANAT760
-                       {
-                             if ((string[i+1] != t->name[0]) && (string[i+1] != ' ') && (strlen(t->name) > 1))
+                        if (string[i] == sonraki->value[j])
+                        {
+                             sayac++;
+                             if (sonraki->value[j+1] == '\0') //if conditions written by SALTANAT760
                              {
-                                   sayac = 1;
-                                   break;
+                                   if (string[i+1] != sonraki->value[0] && string[i+1] != ' ')
+                                   {
+                                         sayac = 1;
+                                         break;
+                                   }
                              }
-                       }
-                       else
-                       {
-                             if ((string[i+1] != t->name[j+1]) && (string[i+1] != ' ') && (strlen(t->name) > 1))
+                             else
                              {
-                                   sayac = 1;
-                                   break;
+                                   if (string[i+1] != sonraki->value[j+1] && string[i+1] != ' ')
+                                   {
+                                         sayac = 1;
+                                         break;
+                                   }
                              }
-                       }
 
+                        }
+                  }
+
+                  else
+                  {
+                        if (string[i] == sonraki->value[j])
+                        {
+                             sayac++;
+                             if (string[i+1] != sonraki->value[0] && string[i+1] != ' ')
+                              {
+                                    printf("girdi mi acebe");
+                                    sayac = 1;
+                                    break;
+                              }
+                        }
                   }
 
                   i++;
@@ -885,7 +978,7 @@ void trim(TERMINAL* t)
                   break;
       }
       printf("sayac : %d\n",sayac);
-      if ((sayac % strlen(t->name)) == 0)
+      if ((sayac % strlen(sonraki->value)) == 0)
       {
             index = 0;
             for (k=sayac; string[k] != '\0'; k++)
@@ -904,14 +997,14 @@ void trim(TERMINAL* t)
       i = (strlen(string)-1);
       for (k=(strlen(string)-1); string[k] != ' '; k--)
       {
-            for (j=(strlen(t->name)-1); j>=0; j--)
+            for (j=(strlen(sonraki->value)-1); j>=0; j--)
             {
-                  if (string[i] == t->name[j])
+                  if (string[i] == sonraki->value[j])
                   {
                         sayac++;
                         if (j == 0) //if conditions written by SALTANAT760
                         {
-                             if ((string[i-1] != t->name[strlen(t->name)-1]) && string[i-1] != ' ')
+                             if ((string[i-1] != sonraki->value[strlen(sonraki->value)-1]) && string[i-1] != ' ')
                              {
                                    sayac = 1;
                                    break;
@@ -919,7 +1012,7 @@ void trim(TERMINAL* t)
                         }
                         else
                         {
-                             if ((string[i-1] != t->name[j-1]) && string[i-1] != ' ')
+                             if ((string[i-1] != sonraki->value[j-1]) && string[i-1] != ' ')
                              {
                                    sayac = 1;
                                    break;
@@ -933,7 +1026,7 @@ void trim(TERMINAL* t)
                   break;
       }
       printf("sayac : %d\n",sayac);
-      if ((sayac % strlen(t->name)) == 0)
+      if ((sayac % strlen(sonraki->value)) == 0)
       {
             for (i=strlen(string)-sayac-1; i<nameMAX; i++)
                   string[i] = '\0';
@@ -949,7 +1042,7 @@ void concat()
       {
             if (string[i] == '\0')
             {
-                  for (j=0; sonraki->name[j] != '\0'; string[i] = sonraki->name[j], i++, j++);
+                  for (j=0; sonraki->value[j] != '\0'; string[i] = sonraki->value[j], i++, j++);
                         break;
             }
       }
