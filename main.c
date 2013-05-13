@@ -929,16 +929,18 @@ void read()
 void trim()
 {
       int i, j, k, index;
-      int sayac = 0;
+      int sayac = 0, bulundu=0;
       sonraki=getNext(sonraki);
       i = 0;
 
+      printf("\n%d\n",strlen(sonraki->value));
       for (k=0; string[k] != ' '; k++)
       {
             for (j=0; sonraki->value[j] != '\0'; j++)
             {
                   if ((strlen(sonraki->value) > 1))
                   {
+                        printf("nie girion\n");
                         if (string[i] == sonraki->value[j])
                         {
                              sayac++;
@@ -969,8 +971,8 @@ void trim()
                              sayac++;
                              if (string[i+1] != sonraki->value[0] && string[i+1] != ' ')
                               {
-                                    printf("girdi mi acebe");
-                                    sayac = 1;
+                                    printf("girdi mi acebe\n");
+                                    sayac = 0;
                                     break;
                               }
                         }
@@ -978,8 +980,10 @@ void trim()
 
                   i++;
             }
-            if (sayac == 1)
+
+            if (sayac == 1 && strlen(sonraki->value) > 1)
                   break;
+
       }
       printf("sayac : %d\n",sayac);
       if ((sayac % strlen(sonraki->value)) == 0)
@@ -999,9 +1003,11 @@ void trim()
 
       sayac = 0;
       i = (strlen(string)-1);
+      //bulundu=strlen(sonraki->value)-1;
+      //printf("\n%d\n",bulundu);
       for (k=(strlen(string)-1); string[k] != ' '; k--)
       {
-            for (j=(strlen(sonraki->value)-1); j>=0; j--)
+            for (j=strlen(sonraki->value)-1; j>=0; j--)
             {
                   if (string[i] == sonraki->value[j])
                   {
@@ -1026,7 +1032,7 @@ void trim()
 
                   i--;
             }
-            if (sayac == 1)
+            if (sayac == 1 && strlen(sonraki->value) > 1)
                   break;
       }
       printf("sayac : %d\n",sayac);
