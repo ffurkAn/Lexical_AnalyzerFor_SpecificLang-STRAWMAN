@@ -32,8 +32,8 @@ struct Terminal {
       char type [typeMAX];
       char value [nameMAX];
       int charClass;
-      int row ;
-      int col ;
+      int row;
+      int col;
       struct Terminal *sonraki;
 
 } typedef TERMINAL;
@@ -51,6 +51,7 @@ void trim();
 void read();
 void write();
 void strCopy(char [], char []);
+void arrayShifter(int);
 void updateVariables(TERMINAL *, TERMINAL *);
 TERMINAL* getNext(TERMINAL *);
 
@@ -316,6 +317,7 @@ void lex ()
                               glCol=1;
                               glRow++;
                         }
+                         terminal->name[index]=nextChar;
                          terminal->value[index]=nextChar;
                          index++;
 
@@ -330,6 +332,7 @@ void lex ()
 
                          else
                          {
+                               terminal->name[index]= '\0';
                                terminal->value[index] = '\0';
                                terminal->type[0]='S';
                                terminal->type[1]='T';
@@ -928,119 +931,87 @@ void read()
 
 void trim()
 {
-      int i, j, k, index;
-      int sayac = 0, bulundu=0;
-      sonraki=getNext(sonraki);
-      i = 0;
+        int strIndex = 0, trimStrLen, trimIndex = 0, isFound = 0, isDone = 0;
+        sonraki=getNext(sonraki);
+        trimStrLen=strlen(sonraki->value);
 
-      printf("\n%d\n",strlen(sonraki->value));
-      for (k=0; string[k] != ' '; k++)
-      {
-            for (j=0; sonraki->value[j] != '\0'; j++)
+        while(string[strIndex] == ' ')
+        {
+            strIndex++;
+        }
+        if (strIndex > 0)
+            arrayShifter(strIndex-1);
+
+        for (strIndex=0; string[strIndex] != '\0'; strIndex++)
+        {
+            if (string[strIndex] == sonraki->value[trimIndex] && isDone == 0)
             {
-                  if ((strlen(sonraki->value) > 1))
-                  {
-                        printf("nie girion\n");
-                        if (string[i] == sonraki->value[j])
-                        {
-                             sayac++;
-                             if (sonraki->value[j+1] == '\0') //if conditions written by SALTANAT760
-                             {
-                                   if (string[i+1] != sonraki->value[0] && string[i+1] != ' ')
-                                   {
-                                         sayac = 1;
-                                         break;
-                                   }
-                             }
-                             else
-                             {
-                                   if (string[i+1] != sonraki->value[j+1] && string[i+1] != ' ')
-                                   {
-                                         sayac = 1;
-                                         break;
-                                   }
-                             }
-
-                        }
-                  }
-
-                  else
-                  {
-                        if (string[i] == sonraki->value[j])
-                        {
-                             sayac++;
-                             if (string[i+1] != sonraki->value[0] && string[i+1] != ' ')
-                              {
-                                    printf("girdi mi acebe\n");
-                                    sayac = 0;
-                                    break;
-                              }
-                        }
-                  }
-
-                  i++;
+                isFound++;
+                trimIndex++;
+                if (sonraki->value[trimIndex] == '\0')
+                {
+                    trimIndex = 0;
+                    if (isFound == trimStrLen)
+                    {
+                        arrayShifter(strIndex);
+                        strIndex = -1;
+                        isFound = 0;
+                    }
+                }
             }
-
-            if (sayac == 1 && strlen(sonraki->value) > 1)
-                  break;
-
-      }
-      printf("sayac : %d\n",sayac);
-      if ((sayac % strlen(sonraki->value)) == 0)
-      {
-            index = 0;
-            for (k=sayac; string[k] != '\0'; k++)
+            else
             {
-                  if (string[k] == ' ' && index == 0)
-                        continue;
-
-                  string[index] = string[k];
-                  index++;
+                isDone = 1;
+                if (string[strIndex] == ' ')
+                    continue;
+                else
+                {
+                    if (strIndex > 0)
+                        arrayShifter(strIndex-1);
+                    break;
+                }
             }
-            for (i=index+1; i<nameMAX; i++)
-                  string[i] = '\0';
-      }
+        }
 
-      sayac = 0;
-      i = (strlen(string)-1);
-      //bulundu=strlen(sonraki->value)-1;
-      //printf("\n%d\n",bulundu);
-      for (k=(strlen(string)-1); string[k] != ' '; k--)
-      {
-            for (j=strlen(sonraki->value)-1; j>=0; j--)
+        isDone = 0;
+        strIndex = strlen(string) - 1;
+        trimIndex = strlen(sonraki->value) - 1;
+        while(string[strIndex] == ' ')
+        {
+            strIndex--;
+        }
+        if (strIndex < (strlen(string) - 1))
+            string[strIndex+1] = '\0';
+
+        for (strIndex; strIndex > 0; strIndex--)
+        {
+            if (string[strIndex] == sonraki->value[trimIndex] && isDone == 0)
             {
-                  if (string[i] == sonraki->value[j])
-                  {
-                        sayac++;
-                        if (j == 0) //if conditions written by SALTANAT760
-                        {
-                             if ((string[i-1] != sonraki->value[strlen(sonraki->value)-1]) && string[i-1] != ' ')
-                             {
-                                   sayac = 1;
-                                   break;
-                             }
-                        }
-                        else
-                        {
-                             if ((string[i-1] != sonraki->value[j-1]) && string[i-1] != ' ')
-                             {
-                                   sayac = 1;
-                                   break;
-                             }
-                        }
-                  }
-
-                  i--;
+                isFound++;
+                trimIndex--;
+                if (trimIndex == -1)
+                {
+                    trimIndex = strlen(sonraki->value) - 1;
+                    if (isFound == trimStrLen)
+                    {
+                        string[strIndex] = '\0';
+                        strIndex = strlen(string);
+                        isFound = 0;
+                    }
+                }
             }
-            if (sayac == 1 && strlen(sonraki->value) > 1)
-                  break;
-      }
-      printf("sayac : %d\n",sayac);
-      if ((sayac % strlen(sonraki->value)) == 0)
-      {
-            for (i=strlen(string)-sayac-1; i<nameMAX; i++)
-                  string[i] = '\0';
-      }
+            else
+            {
+                isDone = 1;
+                if (string[strIndex] == ' ')
+                    continue;
+                else
+                {
+                    string[strIndex+1] = '\0';
+                    break;
+                }
+            }
+        }
 
 }
 
@@ -1059,6 +1030,21 @@ void concat()
 
       for (i=i+j; i<nameMAX; i++)
             string[i] = '\0';
+}
+
+void arrayShifter(int strIndex)
+{
+    int i;
+
+    for (i=0; string[strIndex] != '\0'; i++)
+    {
+        string[i] = string[strIndex+1];
+        strIndex++;
+    }
+    for (i=strIndex; i<nameMAX; i++)
+    {
+        string[i] = '\0';
+    }
 }
 
 void updateVariables(TERMINAL *bas, TERMINAL *t)
@@ -1087,7 +1073,7 @@ TERMINAL* getNext(TERMINAL *simdiki)
 
 void strCopy(char degisicek [], char kopyalancak[])
 {
-      int i;
+      int i,j;
       for (i=0; kopyalancak[i] != '\0'; degisicek[i] = kopyalancak[i], i++);
-      degisicek[i]='\0';
+      for (j=i; j<nameMAX; degisicek[j]='\0', j++);
 }
