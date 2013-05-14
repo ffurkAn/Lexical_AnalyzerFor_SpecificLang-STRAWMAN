@@ -66,6 +66,7 @@ char string[nameMAX];
 
 FILE *file, *fopen();
 TERMINAL *linkedList = NULL;
+TERMINAL *onceki;
 TERMINAL *sonraki;
 TERMINAL *variable;
 
@@ -88,21 +89,29 @@ int main()
       {
             printList(linkedList);
             sonraki = linkedList;
+            onceki = sonraki;
             while(sonraki != NULL)
             {
-                  //printf("onceki = %s\n", sonraki->name);
                   interpret();
-                  //printf("sonraki = %s\n", sonraki->name);
+                  if (sonraki->charClass == EOL && sonraki->sonraki != NULL)
+                  {
+                      if (sonraki->sonraki->charClass != IDENT && sonraki->sonraki->charClass != READ && sonraki->sonraki->charClass != WRITE)
+                      {
+                          printf("#ERROR! expected identifier or command on %d line, %d column \n", sonraki->row, sonraki->col);
+                          errorCounter++;
+                          break;
+                      }
+                  }
                   sonraki = getNext(sonraki);
             }
 
             if (errorCounter == 0)
                   printVariables(linkedList);
             else
-                  printf("\n\n\t%d error(s) found\n",errorCounter);
+                  printf("\n\n\t%d error(s) found\n", errorCounter);
       }
       else
-            printf("\n\n\t%d error(s) found\n",errorCounter);
+            printf("\n\n\t%d error(s) found\n", errorCounter);
 
     }
     system("pause");
@@ -313,13 +322,14 @@ void lex ()
                    while (nextChar != '"' && nextChar != EOF)
                    {
                          if(nextChar== '\n')
-                        {
+                         {
                               glCol=1;
                               glRow++;
-                        }
+                         }
                          terminal->name[index]=nextChar;
                          terminal->value[index]=nextChar;
                          index++;
+                         glCol++;
 
                          nextChar = getc(file);
                    }
@@ -783,9 +793,15 @@ void interpret()
             case IDENT :
                   variable = sonraki;
                   sonraki=getNext(sonraki);
-                  if (sonraki->sonraki->charClass != STRING && sonraki->sonraki->charClass != IDENT && sonraki->sonraki->charClass != LEFTPH)
+                  if (sonraki->charClass != ASSIGN && sonraki->charClass != EOL)
                   {
-                        printf("#ERROR! expected identifier or string constant on %d line, %d column \n",sonraki->row, sonraki->col);
+                        printf("#ERROR! expected assignment operator on %d line, %d column \n", sonraki->row, sonraki->col);
+                        errorCounter++;
+                        return;
+                  }
+                  else if (sonraki->sonraki->charClass != STRING && sonraki->sonraki->charClass != IDENT && sonraki->sonraki->charClass != LEFTPH)
+                  {
+                        printf("#ERROR! expected identifier or string constant on %d line, %d column \n", sonraki->row, sonraki->col);
                         errorCounter++;
                         return;
                   }
@@ -809,6 +825,7 @@ void interpret()
             case WRITE :
                   write();
                   break;
+
       }
 
 }
@@ -817,6 +834,13 @@ void assignment()
 {
             sonraki=getNext(sonraki);
             //printf("sonraki->charClass = %d\n", sonraki->charClass);
+
+            if (onceki->charClass == sonraki->charClass)
+            {
+                printf("#ERROR! expected operator on %d line, %d column \n", sonraki->row, sonraki->col);
+                errorCounter++;
+                return;
+            }
 
             switch (sonraki->charClass)
             {
@@ -891,6 +915,8 @@ void write()
 
 void read()
 {
+      int i = 0;
+      char fileChar;
       sonraki=getNext(sonraki);
       variable = sonraki;
       if (sonraki->charClass != IDENT)
@@ -917,7 +943,13 @@ void read()
                   }
                   else
                   {
-                        //dosya islemleri
+                        fileChar = getc(file);
+                        while (fileChar != EOF)
+                        {
+                            variable->value[i] = fileChar;
+                            fileChar = getc(file);
+                            i++;
+                        }
                   }
             }
       }
@@ -931,7 +963,7 @@ void read()
 
 void trim()
 {
-        int strIndex = 0, trimStrLen, trimIndex = 0, isFound = 0, isDone = 0;
+        int trimStrLen, strIndex = 0, trimIndex = 0, isFound = 0, isDone = 0;
         sonraki=getNext(sonraki);
         trimStrLen=strlen(sonraki->value);
 
@@ -1068,6 +1100,7 @@ void updateVariables(TERMINAL *bas, TERMINAL *t)
 
 TERMINAL* getNext(TERMINAL *simdiki)
 {
+      onceki = simdiki;
       return simdiki->sonraki;
 }
 
